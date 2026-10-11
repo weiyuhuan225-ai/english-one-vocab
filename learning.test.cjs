@@ -12,6 +12,7 @@ assert.equal(w.EN1_SYLLABUS.length,5529);assert.equal(w.EN1_SENSES.length,158);a
 assert.equal(new Set(w.EN1_SENSES.map(c=>c.year)).size,17);assert(!w.EN1_SYLLABUS.some(x=>x.word==='coke'));
 assert.equal(d.querySelector('#view-senses').hidden,false);assert.equal(text('#stat-screened'),'1');
 assert.equal(d.querySelector('.train-answer'),null);assert.equal(text('.train-word'),'fine');
+assert.match(d.querySelector('.sentence-panel mark').previousSibling.textContent,/\$85,000 $/,'fine must highlight the whole word, not the substring in defined');
 change('#sense-guess','<img src=x onerror=alert(1)> 罚钱','input');click('[data-reveal-sense]');
 assert.match(text('.train-answer'),/罚款/);assert.match(text('.your-guess'),/罚钱/);assert.equal(d.querySelector('.your-guess img'),null);
 click('[data-sense-grade="known"]');assert.equal(text('.train-word'),'game');
