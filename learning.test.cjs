@@ -1,0 +1,35 @@
+const {JSDOM,VirtualConsole}=require('jsdom');
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const root=__dirname,errors=[];
+const html=fs.readFileSync(path.join(root,'index.html'),'utf8').replace(/<script src=[^>]+><\/script>/g,'');
+const consoleProxy=new VirtualConsole();consoleProxy.on('jsdomError',e=>errors.push(e.message));
+const dom=new JSDOM(html,{url:'https://example.test/english-one-vocab/#senses',runScripts:'dangerously',virtualConsole:consoleProxy,beforeParse(w){w.scrollTo=()=>{};w.confirm=()=>true;w.HTMLElement.prototype.scrollIntoView=()=>{};w.localStorage.setItem('en1-trainer-local-v1',JSON.stringify({records:{conservative:{status:'unsure',updated:1,reviewed:0,repeats:0}},deck:'3'}));}});
+const w=dom.window,d=w.document;for(const f of ['syllabus-data.js','senses-data.js','learning.js'])w.eval(fs.readFileSync(path.join(root,f),'utf8'));
+const click=s=>{const x=d.querySelector(s);assert(x,'missing '+s);x.click()};
+const change=(s,value,event='change')=>{const x=d.querySelector(s);x.value=value;x.dispatchEvent(new w.Event(event,{bubbles:true}))};
+const text=s=>d.querySelector(s).textContent;
+assert.equal(w.EN1_SYLLABUS.length,5529);assert.equal(w.EN1_SENSES.length,158);assert.equal(w.EN1_DATA.length,275);
+assert.equal(new Set(w.EN1_SENSES.map(c=>c.year)).size,17);assert(!w.EN1_SYLLABUS.some(x=>x.word==='coke'));
+assert.equal(d.querySelector('#view-senses').hidden,false);assert.equal(text('#stat-screened'),'1');
+assert.equal(d.querySelector('.train-answer'),null);assert.equal(text('.train-word'),'fine');
+change('#sense-guess','<img src=x onerror=alert(1)> 罚钱','input');click('[data-reveal-sense]');
+assert.match(text('.train-answer'),/罚款/);assert.match(text('.your-guess'),/罚钱/);assert.equal(d.querySelector('.your-guess img'),null);
+click('[data-sense-grade="known"]');assert.equal(text('.train-word'),'game');
+assert.equal(w.EN1_EXT.exportData().records[w.EN1_SENSES[0].id].status,'known');
+change('#sense-year','2022');assert.equal(text('#train-counter').includes('/ 13 题'),true);
+click('[data-reveal-sense]');click('[data-sense-grade="weak"]');change('#sense-mode','weak');assert.match(text('#train-counter'),/1 \/ 1 题/);
+change('#sense-year','all');change('#sense-mode','all');click('[data-sense-tab="notes"]');change('#sense-search','记入账目','input');assert.match(text('#notes-results'),/共 1 条/);assert.match(text('#sense-notes-list'),/book/);
+click('[data-go="syllabus"]');change('#syllabus-search','fine','input');click('[data-familiar="known"][data-lemma="fine"]');assert.equal(w.EN1_EXT.exportData().familiar.fine,'known');
+click('[data-go="senses"]');change('#sense-mode','familiar');click('[data-sense-tab="train"]');assert.match(text('#train-counter'),/1 \/ 3 题/);
+const originalProgress=w.localStorage.getItem('en1-trainer-local-v1');d.dispatchEvent(new w.KeyboardEvent('keydown',{key:'1',bubbles:true}));assert.equal(w.localStorage.getItem('en1-trainer-local-v1'),originalProgress);
+click('[data-go="syllabus"]');change('#syllabus-search','','input');assert.equal(d.querySelectorAll('.syllabus-row').length,40);click('[data-page-kind="words"][data-page-step="1"]');assert.match(text('#syllabus-results'),/41—80/);
+change('#syllabus-search','nothing-match-98765','input');assert.match(text('#syllabus-list'),/没有找到/);
+const saved=w.EN1_EXT.exportData();w.EN1_EXT.importData({familiar:{fine:'known',bogus:'known'},records:{bad:{status:'known'}}});assert.equal(w.EN1_EXT.exportData().familiar.bogus,undefined);w.EN1_EXT.importData(saved);
+// Old backups must preserve newer independent learning records.
+class Reader{readAsText(file){this.result=file.payload;this.onload()}}
+w.FileReader=Reader;const input=d.querySelector('#backup-file');Object.defineProperty(input,'files',{configurable:true,value:[{payload:JSON.stringify({app:'english-one-vocab',version:1,records:{conservative:{status:'known'}},deck:'all'})}]});input.dispatchEvent(new w.Event('change'));
+assert.equal(JSON.stringify(w.EN1_EXT.exportData()),JSON.stringify(saved));assert.equal(JSON.parse(w.localStorage.getItem('en1-trainer-local-v1')).records.conservative.status,'known');
+let exported;class CaptureBlob{constructor(parts){exported=parts.join('')}}w.Blob=CaptureBlob;w.URL.createObjectURL=()=> 'blob:test';w.URL.revokeObjectURL=()=>{};w.HTMLAnchorElement.prototype.click=()=>{};click('#backup-export');const backup=JSON.parse(exported);assert.equal(backup.version,2);assert.equal(backup.extension.familiar.fine,'known');assert.equal(backup.records.conservative.status,'known');
+click('[data-download-syllabus]');assert.equal(exported.split('\r\n').length,5530);click('[data-download-senses]');assert.equal(exported.split('\r\n').length,159);
+click('[data-go="scan"]');assert.equal(d.querySelector('#view-scan').hidden,false);click('[data-go="senses"]');assert.equal(d.querySelector('#view-scan').hidden,true);
+assert.deepEqual(errors,[]);console.log('PASS: data coverage, hidden answers, safe guesses, grading, filters, familiarity, pagination, legacy progress, import/export, CSV, and navigation');dom.window.close();
