@@ -17,7 +17,8 @@
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
 </style>
-<link rel="stylesheet" href="learning.css?v=20261011-2">
+<link rel="stylesheet" href="learning.css?v=20261011-3">
+<link rel="stylesheet" href="annual-update.css?v=20261011-3">
 </head>
 <body>
 <div class="app-shell">
@@ -143,11 +144,12 @@ function eventHandlers(){document.addEventListener('click',event=>{const b=event
  $('#deck-select').addEventListener('change',e=>{state.deck=e.target.value;persist();scanRevealed=false;renderScan()});$('#word-search').addEventListener('input',()=>renderLibrary());$('#library-sort').addEventListener('change',renderLibrary);$$('#filter-strip .filter-chip').forEach(b=>b.addEventListener('click',()=>{libraryFilter=b.dataset.filter;expandedWord='';renderLibrary()}));$('#review-restart').addEventListener('click',()=>{initializeReview(true);renderReview();notify('已重新开始本轮生词复习')});$('#review-end').addEventListener('click',()=>showView('home'));$('#backup-export').addEventListener('click',exportProgress);$('#backup-import').addEventListener('click',()=>$('#backup-file').click());$('#backup-file').addEventListener('change',e=>{importProgress(e.target.files?.[0]);e.target.value=''});$('#export-unknown').addEventListener('click',exportUnknown);$('#reset-data').addEventListener('click',()=>{if(!confirm('确定清空原有275个精选词的学习标记吗？此操作不可撤销，建议先导出进度备份。'))return;state.records={};reviewQueue=[];reviewWasStarted=false;persist();renderOverview();showView('home');notify('学习进度已经重置')});
  document.addEventListener('keydown',e=>{const tag=document.activeElement?.tagName?.toLowerCase();if(['input','select','textarea'].includes(tag)||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key;if(k==='/'&&active==='library'){e.preventDefault();$('#word-search').focus();return}if(active==='scan'){if(k===' '){e.preventDefault();scanRevealed=!scanRevealed;renderScan();return}if(k==='1')scanGrade('known');if(k==='2')scanGrade('unsure');if(k==='3')scanGrade('unknown')}else if(active==='review'){if(k===' '){e.preventDefault();reviewRevealed=!reviewRevealed;renderReview();return}if(reviewRevealed){if(k==='1')reviewGrade('unknown');if(k==='2')reviewGrade('unsure');if(k==='3')reviewGrade('known')}}});}
 if(!words.length){document.body.innerHTML='<main style="padding:60px 25px;font-family:sans-serif"><h1>词库加载失败</h1><p>请检查 vocab-data.js 是否与网页一起部署。</p></main>';return}
-window.EN1_LEGACY={deactivate:()=>{active='extra'}};const requestedHash=location.hash;renderOverview();eventHandlers();const deep=location.hash.slice(1);showView(['home','scan','review','library','settings'].includes(deep)?deep:'home');if(['#syllabus','#senses'].includes(requestedHash))history.replaceState(null,'',requestedHash);
+window.EN1_LEGACY={deactivate:()=>{active='extra'}};const requestedHash=location.hash;renderOverview();eventHandlers();const deep=location.hash.slice(1);showView(['home','scan','review','library','settings'].includes(deep)?deep:'home');if(['#syllabus','#senses','#new2027'].includes(requestedHash))history.replaceState(null,'',requestedHash);
 })();
 
 </script>
-<script src="syllabus-data.js?v=20261011-2"></script>
-<script src="senses-data.js?v=20261011-2"></script>
-<script src="learning.js?v=20261011-2"></script>
+<script src="syllabus-data.js?v=20261011-3"></script>
+<script src="senses-data.js?v=20261011-3"></script>
+<script src="learning.js?v=20261011-3"></script>
+<script src="annual-update.js?v=20261011-3"></script>
 </body></html>
